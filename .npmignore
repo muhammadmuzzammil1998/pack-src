@@ -1,0 +1,15 @@
+src
+tests
+benchmarks
+fixtures
+.changeset
+.github
+*.config.ts
+*.config.js
+tsconfig.json
+.editorconfig
+.prettierrc
+eslint.config.js
+.env*
+*.tgz
+coverage
