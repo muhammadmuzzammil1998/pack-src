@@ -1,5 +1,11 @@
 # pack-src Changelog
 
+## 0.1.1
+
+### Patch Changes
+
+- 4a8b453: Update readme
+
 All notable changes to this project will be documented in this file.
 
 ## 0.1.1
