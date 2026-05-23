@@ -2,7 +2,7 @@ import path from 'node:path';
 
 /** Normalize a filesystem path to use forward slashes */
 export function normalizePath(filePath: string): string {
-  return filePath.split(path.sep).join('/');
+  return filePath.replace(/\\/g, '/');
 }
 
 /** Convert an absolute path to a path relative to a root, using forward slashes */
