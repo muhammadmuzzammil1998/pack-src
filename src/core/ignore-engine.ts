@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import _ignore from 'ignore';
 import type { Ignore } from 'ignore';
-import { DEFAULT_IGNORES, ENV_PATTERNS, IGNORE_FILES } from '../constants/index.js';
+import { DEFAULT_IGNORES, ENV_PATTERNS, IGNORE_FILES, INCLUDE_FILES } from '../constants/index.js';
 import type { IgnoreEngineOptions } from '../types/index.js';
 
 /** CJS interop: ignore's default export is callable but NodeNext types disagree */
@@ -22,6 +22,8 @@ export class IgnoreEngine {
   private readonly opts: IgnoreEngineOptions;
   /** Per-directory ignore instances, keyed by directory (normalized) */
   private readonly cache = new Map<string, Ignore>();
+  /** Per-directory include instances for force-include patterns (.packsrcinclude) */
+  private readonly includeCache = new Map<string, Ignore>();
   /** Root-level ignore instance combining all global rules */
   private rootIgnore: Ignore;
 
@@ -59,6 +61,45 @@ export class IgnoreEngine {
     }
 
     this.cache.set(normalizedDir, ig);
+
+    const includeIg = createIgnore();
+    for (const filename of INCLUDE_FILES) {
+      const filePath = path.join(normalizedDir, filename);
+      try {
+        const content = await fs.readFile(filePath, 'utf8');
+        includeIg.add(content);
+        if (this.opts.verbose) {
+          process.stderr.write(`  [include-rules] loaded ${filePath}\n`);
+        }
+      } catch {
+        // File doesn't exist or is unreadable — skip silently
+      }
+    }
+    this.includeCache.set(normalizedDir, includeIg);
+  }
+
+  /**
+   * Determine whether a given absolute path is force-included via .packsrcinclude.
+   * Force-included files bypass all ignore rules.
+   */
+  isForceIncluded(absolutePath: string): boolean {
+    let current = path.dirname(absolutePath);
+    for (;;) {
+      const ig = this.includeCache.get(path.resolve(current));
+      if (ig !== undefined) {
+        const relFromDir = path.relative(current, absolutePath).split(path.sep).join('/');
+        if (ig.ignores(relFromDir)) {
+          if (this.opts.verbose) {
+            process.stderr.write(`  [force-included] ${relFromDir}\n`);
+          }
+          return true;
+        }
+      }
+      const parent = path.dirname(current);
+      if (parent === current) break;
+      current = parent;
+    }
+    return false;
   }
 
   /**
@@ -68,6 +109,8 @@ export class IgnoreEngine {
    * ancestors of the file.
    */
   isIgnored(absolutePath: string): boolean {
+    if (this.isForceIncluded(absolutePath)) return false;
+
     const root = path.resolve(this.opts.root);
     const relFromRoot = path.relative(root, absolutePath);
     const normalizedRel = relFromRoot.split(path.sep).join('/');
