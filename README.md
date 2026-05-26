@@ -13,6 +13,7 @@
 ## Features
 
 - **Smart ignoring** — respects `.packsrcignore`, `.gitignore`, `.dockerignore`, `.npmignore` and built-in defaults
+- **Force-include support** — use `.packsrcinclude` to override ignore rules for specific files
 - **Streaming ZIP** — never loads entire files into memory; scales to large repos
 - **Deterministic output** — files are sorted for reproducible archives
 - **Polished CLI** — progress spinners, colored output, human-readable stats
@@ -70,6 +71,9 @@ pack-src ./my-project -c 9
 # Include .env files (excluded by default)
 pack-src ./my-project --include-env
 
+# Include .git directory (excluded by default)
+pack-src ./my-project --include-git
+
 # Disable .gitignore
 pack-src ./my-project --no-gitignore
 
@@ -99,6 +103,7 @@ Options:
   --dry-run                 Preview files without creating archive
   --verbose                 Verbose output
   --include-env             Include .env and secret files
+  --include-git             Include .git directory in archive
   --no-gitignore            Do not use .gitignore files
   --no-default-ignore       Do not apply built-in exclusions
   --stats                   Print compression statistics
@@ -152,6 +157,37 @@ Use `--include-env` to explicitly include them.
 ### Negation Support
 
 Negation patterns (e.g., `!important.log`) work as expected within any ignore file.
+
+### Force-Include with `.packsrcinclude`
+
+Sometimes you need to include specific files that would otherwise be ignored. Create a `.packsrcinclude` file with patterns to force-include:
+
+```
+# Include specific build artifacts
+dist/bundle.min.js
+dist/styles.css
+
+# Include all .wasm files in build directory
+build/**/*.wasm
+```
+
+**How it works:**
+
+- Files matching `.packsrcinclude` patterns bypass **all** ignore rules
+- Works with glob patterns (powered by the same engine as `.gitignore`)
+- Useful for including specific generated files, build artifacts, or vendored dependencies
+- Can be placed in any subdirectory (rules apply to that directory and below)
+
+**Example use case:**
+
+```bash
+# Your .gitignore excludes dist/
+# But you want to include the final bundle
+
+echo "dist/bundle.min.js" > .packsrcinclude
+pack-src .
+# → dist/bundle.min.js is now included despite dist/ being ignored
+```
 
 ---
 
@@ -212,6 +248,7 @@ const engine = new IgnoreEngine({
   gitignore: true,
   defaultIgnore: true,
   includeEnv: false,
+  includeGit: false,
   verbose: false,
 });
 await engine.loadDirectory('./my-project');

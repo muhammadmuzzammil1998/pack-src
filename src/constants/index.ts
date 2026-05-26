@@ -33,6 +33,9 @@ export const DEFAULT_IGNORES: readonly string[] = [
   'Thumbs.db',
 ];
 
+/** Include files loaded in priority order — patterns force-include files even if ignored */
+export const INCLUDE_FILES: readonly string[] = ['.packsrcinclude'];
+
 /** Ignore files loaded in priority order */
 export const IGNORE_FILES: readonly string[] = [
   '.packsrcignore',

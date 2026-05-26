@@ -26,6 +26,7 @@ export async function runPack(opts: Partial<PackOptions> & { source: string }): 
     timestamp: opts.timestamp ?? false,
     overwrite: opts.overwrite ?? false,
     quiet: opts.quiet ?? false,
+    includeGit: opts.includeGit ?? false,
   };
 
   const absSource = path.resolve(options.source);
@@ -65,6 +66,7 @@ export async function runPack(opts: Partial<PackOptions> & { source: string }): 
     defaultIgnore: options.defaultIgnore,
     includeEnv: options.includeEnv,
     verbose: options.verbose,
+    includeGit: options.includeGit,
   });
 
   // Preload root-level ignore files

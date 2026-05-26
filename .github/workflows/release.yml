@@ -31,16 +31,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
 
-      - name: Get version
-        id: version
-        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-
       - name: Create Release PR or Publish
         uses: changesets/action@v1
         with:
           publish: pnpm release
           title: 'chore: release'
-          commit: 'release ${{ steps.version.outputs.version }}'
+          commit: 'release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -25,6 +25,8 @@ export interface PackOptions {
   overwrite: boolean;
   /** Quiet mode — no output except errors */
   quiet: boolean;
+  /** Include .git directory in archive */
+  includeGit: boolean;
 }
 
 export interface CollectedFile {
@@ -60,4 +62,6 @@ export interface IgnoreEngineOptions {
   includeEnv: boolean;
   /** Verbose — log ignored files */
   verbose: boolean;
+  /** Include .git directory (bypasses .git exclusion from built-in defaults) */
+  includeGit: boolean;
 }
