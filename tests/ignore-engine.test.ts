@@ -29,6 +29,7 @@ function makeEngine(overrides?: Partial<IgnoreEngineOptions>) {
     gitignore: true,
     defaultIgnore: true,
     includeEnv: false,
+    includeGit: false,
     verbose: false,
     ...overrides,
   });
@@ -105,6 +106,7 @@ describe('IgnoreEngine — .packsrcinclude', () => {
       gitignore: false,
       defaultIgnore: true,
       includeEnv: false,
+      includeGit: false,
       verbose: false,
     });
     await engine.loadDirectory(dir);
@@ -125,6 +127,7 @@ describe('IgnoreEngine — .packsrcinclude', () => {
       gitignore: false,
       defaultIgnore: true,
       includeEnv: false,
+      includeGit: false,
       verbose: false,
     });
     await engine.loadDirectory(dir);
@@ -143,10 +146,31 @@ describe('IgnoreEngine — .packsrcinclude', () => {
       gitignore: false,
       defaultIgnore: false,
       includeEnv: false,
+      includeGit: false,
       verbose: false,
     });
     await engine.loadDirectory(dir);
 
     expect(engine.isForceIncluded(path.join(dir, 'index.ts'))).toBe(false);
+  });
+});
+
+describe('IgnoreEngine — include-git', () => {
+  it('ignores .git by default', () => {
+    const engine = makeEngine();
+    const p = path.join(FIXTURE, '.git', 'config');
+    expect(engine.isIgnored(p)).toBe(true);
+  });
+
+  it('includes .git when includeGit is true', () => {
+    const engine = makeEngine({ includeGit: true });
+    const p = path.join(FIXTURE, '.git', 'config');
+    expect(engine.isIgnored(p)).toBe(false);
+  });
+
+  it('still ignores node_modules when includeGit is true', () => {
+    const engine = makeEngine({ includeGit: true });
+    const p = path.join(FIXTURE, 'node_modules', 'pkg', 'index.js');
+    expect(engine.isIgnored(p)).toBe(true);
   });
 });
