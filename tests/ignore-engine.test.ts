@@ -1,11 +1,27 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import path from 'node:path';
+import fsp from 'node:fs/promises';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { IgnoreEngine } from '../src/core/ignore-engine.js';
 import type { IgnoreEngineOptions } from '../src/types/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = path.join(__dirname, 'fixtures', 'sample-project');
+
+let tmpDir = '';
+
+afterEach(async () => {
+  if (tmpDir) {
+    await fsp.rm(tmpDir, { recursive: true, force: true });
+    tmpDir = '';
+  }
+});
+
+async function makeTmp(): Promise<string> {
+  tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'pack-src-ie-test-'));
+  return tmpDir;
+}
 
 function makeEngine(overrides?: Partial<IgnoreEngineOptions>) {
   return new IgnoreEngine({
@@ -74,5 +90,63 @@ describe('IgnoreEngine — default ignore disabled', () => {
     const engine = makeEngine({ defaultIgnore: false });
     const p = path.join(FIXTURE, 'node_modules', 'pkg', 'index.js');
     expect(engine.isIgnored(p)).toBe(false);
+  });
+});
+
+describe('IgnoreEngine — .packsrcinclude', () => {
+  it('force-includes a file that would otherwise be ignored', async () => {
+    const dir = await makeTmp();
+    await fsp.writeFile(path.join(dir, '.packsrcinclude'), 'dist/important.js\n');
+    await fsp.mkdir(path.join(dir, 'dist'), { recursive: true });
+    await fsp.writeFile(path.join(dir, 'dist', 'important.js'), '');
+
+    const engine = new IgnoreEngine({
+      root: dir,
+      gitignore: false,
+      defaultIgnore: true,
+      includeEnv: false,
+      verbose: false,
+    });
+    await engine.loadDirectory(dir);
+
+    const target = path.join(dir, 'dist', 'important.js');
+    expect(engine.isForceIncluded(target)).toBe(true);
+    expect(engine.isIgnored(target)).toBe(false);
+  });
+
+  it('does not force-include files not listed in .packsrcinclude', async () => {
+    const dir = await makeTmp();
+    await fsp.writeFile(path.join(dir, '.packsrcinclude'), 'dist/important.js\n');
+    await fsp.mkdir(path.join(dir, 'dist'), { recursive: true });
+    await fsp.writeFile(path.join(dir, 'dist', 'other.js'), '');
+
+    const engine = new IgnoreEngine({
+      root: dir,
+      gitignore: false,
+      defaultIgnore: true,
+      includeEnv: false,
+      verbose: false,
+    });
+    await engine.loadDirectory(dir);
+
+    const other = path.join(dir, 'dist', 'other.js');
+    expect(engine.isForceIncluded(other)).toBe(false);
+    expect(engine.isIgnored(other)).toBe(true);
+  });
+
+  it('returns false from isForceIncluded when no .packsrcinclude exists', async () => {
+    const dir = await makeTmp();
+    await fsp.writeFile(path.join(dir, 'index.ts'), '');
+
+    const engine = new IgnoreEngine({
+      root: dir,
+      gitignore: false,
+      defaultIgnore: false,
+      includeEnv: false,
+      verbose: false,
+    });
+    await engine.loadDirectory(dir);
+
+    expect(engine.isForceIncluded(path.join(dir, 'index.ts'))).toBe(false);
   });
 });
