@@ -71,6 +71,9 @@ pack-src ./my-project -c 9
 # Include .env files (excluded by default)
 pack-src ./my-project --include-env
 
+# Include .git directory (excluded by default)
+pack-src ./my-project --include-git
+
 # Disable .gitignore
 pack-src ./my-project --no-gitignore
 
@@ -100,6 +103,7 @@ Options:
   --dry-run                 Preview files without creating archive
   --verbose                 Verbose output
   --include-env             Include .env and secret files
+  --include-git             Include .git directory in archive
   --no-gitignore            Do not use .gitignore files
   --no-default-ignore       Do not apply built-in exclusions
   --stats                   Print compression statistics
@@ -244,6 +248,7 @@ const engine = new IgnoreEngine({
   gitignore: true,
   defaultIgnore: true,
   includeEnv: false,
+  includeGit: false,
   verbose: false,
 });
 await engine.loadDirectory('./my-project');
