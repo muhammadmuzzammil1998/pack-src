@@ -29,7 +29,10 @@ export class IgnoreEngine {
     this.opts = opts;
     this.rootIgnore = createIgnore();
     if (opts.defaultIgnore) {
-      this.rootIgnore.add(DEFAULT_IGNORES);
+      const defaults = opts.includeGit
+        ? DEFAULT_IGNORES.filter((p) => p !== '.git')
+        : DEFAULT_IGNORES;
+      this.rootIgnore.add(defaults);
     }
     if (!opts.includeEnv) {
       this.rootIgnore.add(ENV_PATTERNS);

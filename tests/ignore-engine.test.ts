@@ -13,6 +13,7 @@ function makeEngine(overrides?: Partial<IgnoreEngineOptions>) {
     gitignore: true,
     defaultIgnore: true,
     includeEnv: false,
+    includeGit: false,
     verbose: false,
     ...overrides,
   });
@@ -74,5 +75,25 @@ describe('IgnoreEngine — default ignore disabled', () => {
     const engine = makeEngine({ defaultIgnore: false });
     const p = path.join(FIXTURE, 'node_modules', 'pkg', 'index.js');
     expect(engine.isIgnored(p)).toBe(false);
+  });
+});
+
+describe('IgnoreEngine — include-git', () => {
+  it('ignores .git by default', () => {
+    const engine = makeEngine();
+    const p = path.join(FIXTURE, '.git', 'config');
+    expect(engine.isIgnored(p)).toBe(true);
+  });
+
+  it('includes .git when includeGit is true', () => {
+    const engine = makeEngine({ includeGit: true });
+    const p = path.join(FIXTURE, '.git', 'config');
+    expect(engine.isIgnored(p)).toBe(false);
+  });
+
+  it('still ignores node_modules when includeGit is true', () => {
+    const engine = makeEngine({ includeGit: true });
+    const p = path.join(FIXTURE, 'node_modules', 'pkg', 'index.js');
+    expect(engine.isIgnored(p)).toBe(true);
   });
 });
