@@ -14,6 +14,7 @@ program
   .option('--dry-run', 'Preview files without creating archive')
   .option('--verbose', 'Verbose output')
   .option('--include-env', 'Include .env and secret files')
+  .option('--include-git', 'Include .git directory in archive')
   .option('--no-gitignore', 'Do not use .gitignore files')
   .option('--no-default-ignore', 'Do not apply built-in exclusions')
   .option('--stats', 'Print compression statistics')
@@ -40,6 +41,7 @@ program
         timestamp: Boolean(opts['timestamp']),
         overwrite: Boolean(opts['overwrite']),
         quiet: Boolean(opts['quiet']),
+        includeGit: Boolean(opts['includeGit']),
       });
     } catch (err) {
       process.stderr.write(`\n${(err as Error).message}\n`);
