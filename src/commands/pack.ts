@@ -10,6 +10,7 @@ import { printStats } from '../core/stats.js';
 import { createZip } from '../core/zipper.js';
 import type { PackOptions } from '../types/index.js';
 import { formatBytes } from '../utils/format.js';
+import { getTrackedFiles } from '../utils/git.js';
 
 export async function runPack(opts: Partial<PackOptions> & { source: string }): Promise<void> {
   const options: PackOptions = {
@@ -27,6 +28,7 @@ export async function runPack(opts: Partial<PackOptions> & { source: string }): 
     overwrite: opts.overwrite ?? false,
     quiet: opts.quiet ?? false,
     includeGit: opts.includeGit ?? false,
+    gitTracked: opts.gitTracked ?? false,
   };
 
   const absSource = path.resolve(options.source);
@@ -72,6 +74,11 @@ export async function runPack(opts: Partial<PackOptions> & { source: string }): 
   // Preload root-level ignore files
   await engine.loadDirectory(absSource);
 
+  let trackedFiles: Set<string> | undefined;
+  if (options.gitTracked) {
+    trackedFiles = await getTrackedFiles(absSource);
+  }
+
   if (!options.quiet) {
     process.stdout.write(
       `${chalk.bold.cyan('pack-src')} ${chalk.dim('→')} ${path.basename(outputPath)}\n`,
@@ -81,7 +88,7 @@ export async function runPack(opts: Partial<PackOptions> & { source: string }): 
   const spinner = options.quiet ? null : ora({ text: 'Collecting files…', spinner: 'dots' });
   spinner?.start();
 
-  const files = await collectFiles(absSource, engine, options.verbose);
+  const files = await collectFiles(absSource, engine, options.verbose, trackedFiles);
 
   spinner?.stop();
 

@@ -15,6 +15,7 @@ program
   .option('--verbose', 'Verbose output')
   .option('--include-env', 'Include .env and secret files')
   .option('--include-git', 'Include .git directory in archive')
+  .option('--git-tracked', 'Only include files tracked by git')
   .option('--no-gitignore', 'Do not use .gitignore files')
   .option('--no-default-ignore', 'Do not apply built-in exclusions')
   .option('--stats', 'Print compression statistics')
@@ -42,6 +43,7 @@ program
         overwrite: Boolean(opts['overwrite']),
         quiet: Boolean(opts['quiet']),
         includeGit: Boolean(opts['includeGit']),
+        gitTracked: Boolean(opts['gitTracked']),
       });
     } catch (err) {
       process.stderr.write(`\n${(err as Error).message}\n`);
