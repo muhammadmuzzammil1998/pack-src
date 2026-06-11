@@ -37,6 +37,8 @@ describe('getTrackedFiles', () => {
 
   it('throws a descriptive error for a non-git directory', async () => {
     tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'pack-src-git-test-'));
-    await expect(getTrackedFiles(tmpDir)).rejects.toThrow('--git-tracked requires a git repository');
+    await expect(getTrackedFiles(tmpDir)).rejects.toThrow(
+      '--git-tracked requires a git repository',
+    );
   });
 });
