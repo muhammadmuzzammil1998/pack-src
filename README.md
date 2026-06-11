@@ -14,6 +14,7 @@
 
 - **Smart ignoring** — respects `.packsrcignore`, `.gitignore`, `.dockerignore`, `.npmignore` and built-in defaults
 - **Force-include support** — use `.packsrcinclude` to override ignore rules for specific files
+- **Git-tracked mode** — use `--git-tracked` to pack only files committed to the repository
 - **Streaming ZIP** — never loads entire files into memory; scales to large repos
 - **Deterministic output** — files are sorted for reproducible archives
 - **Polished CLI** — progress spinners, colored output, human-readable stats
@@ -74,6 +75,12 @@ pack-src ./my-project --include-env
 # Include .git directory (excluded by default)
 pack-src ./my-project --include-git
 
+# Only include files tracked by git
+pack-src ./my-project --git-tracked
+
+# Combine: tracked files only, but force-include specific extras via .packsrcinclude
+pack-src ./my-project --git-tracked
+
 # Disable .gitignore
 pack-src ./my-project --no-gitignore
 
@@ -104,6 +111,7 @@ Options:
   --verbose                 Verbose output
   --include-env             Include .env and secret files
   --include-git             Include .git directory in archive
+  --git-tracked             Only include files tracked by git
   --no-gitignore            Do not use .gitignore files
   --no-default-ignore       Do not apply built-in exclusions
   --stats                   Print compression statistics
@@ -157,6 +165,29 @@ Use `--include-env` to explicitly include them.
 ### Negation Support
 
 Negation patterns (e.g., `!important.log`) work as expected within any ignore file.
+
+### Git-Tracked Mode
+
+When `--git-tracked` is passed, only files listed in `git ls-files` (i.e. committed/staged tracked files) are included in the archive.
+
+```bash
+pack-src ./my-project --git-tracked
+```
+
+**How it works:**
+
+- Runs `git ls-files` in the source directory to get the set of tracked files
+- Any file not in that set is excluded, regardless of other ignore rules
+- **`.packsrcinclude` still applies** — force-included files are always packed even if untracked
+- Requires the source directory to be inside a git repository; fails with a clear error otherwise
+
+**Interaction with other flags:**
+
+| Combination                         | Behaviour                                             |
+| ----------------------------------- | ----------------------------------------------------- |
+| `--git-tracked --no-gitignore`      | Tracked files only; `.gitignore` patterns not applied |
+| `--git-tracked --include-env`       | Tracked files only; `.env` files included if tracked  |
+| `--git-tracked` + `.packsrcinclude` | Tracked files + any force-included extras             |
 
 ### Force-Include with `.packsrcinclude`
 
@@ -241,6 +272,18 @@ await runPack({
   compression: 6,
   stats: true,
 });
+
+// Pack only git-tracked files
+await runPack({
+  source: './my-project',
+  output: 'snapshot.zip',
+  gitTracked: true,
+});
+
+// Use the git utility directly
+import { getTrackedFiles } from 'pack-src';
+const tracked = await getTrackedFiles('./my-project');
+console.log(`${tracked.size} tracked files`);
 
 // Use the ignore engine directly
 const engine = new IgnoreEngine({
