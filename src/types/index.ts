@@ -27,6 +27,8 @@ export interface PackOptions {
   quiet: boolean;
   /** Include .git directory in archive */
   includeGit: boolean;
+  /** Only include files tracked by git (git ls-files) */
+  gitTracked: boolean;
 }
 
 export interface CollectedFile {

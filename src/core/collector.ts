@@ -31,6 +31,7 @@ export async function collectFiles(
   root: string,
   engine: IgnoreEngine,
   verbose: boolean,
+  trackedFiles?: Set<string>,
 ): Promise<CollectedFile[]> {
   const absRoot = path.resolve(root);
 
@@ -69,6 +70,12 @@ export async function collectFiles(
     if (stat.isSymbolicLink()) return;
 
     if (engine.isIgnored(absPath)) return;
+
+    // --git-tracked filter: skip files not in the tracked set unless force-included
+    if (trackedFiles !== undefined && !engine.isForceIncluded(absPath)) {
+      const relPath = normalizePath(path.relative(absRoot, absPath));
+      if (!trackedFiles.has(relPath)) return;
+    }
 
     const archivePath = toArchivePath(absPath, absRoot);
 
