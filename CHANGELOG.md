@@ -1,5 +1,11 @@
 # pack-src Changelog
 
+## 0.3.1
+
+### Patch Changes
+
+- 7c8e141: Allow .git files to bypass tracked filter when includeGit is true
+
 ## 0.3.0
 
 ### Minor Changes
