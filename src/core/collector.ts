@@ -32,6 +32,7 @@ export async function collectFiles(
   engine: IgnoreEngine,
   verbose: boolean,
   trackedFiles?: Set<string>,
+  includeGit?: boolean,
 ): Promise<CollectedFile[]> {
   const absRoot = path.resolve(root);
 
@@ -71,10 +72,20 @@ export async function collectFiles(
 
     if (engine.isIgnored(absPath)) return;
 
-    // --git-tracked filter: skip files not in the tracked set unless force-included
+    // --git-tracked filter: skip files not in the tracked set unless force-included or inside .git with includeGit
     if (trackedFiles !== undefined && !engine.isForceIncluded(absPath)) {
-      const relPath = normalizePath(path.relative(absRoot, absPath));
-      if (!trackedFiles.has(relPath)) return;
+      // Bypass tracked filter for .git when includeGit is true
+      if (includeGit) {
+        const relPath = normalizePath(path.relative(absRoot, absPath));
+        if (relPath.startsWith('.git/') || relPath === '.git') {
+          // .git files bypass the tracked check
+        } else {
+          if (!trackedFiles.has(relPath)) return;
+        }
+      } else {
+        const relPath = normalizePath(path.relative(absRoot, absPath));
+        if (!trackedFiles.has(relPath)) return;
+      }
     }
 
     const archivePath = toArchivePath(absPath, absRoot);

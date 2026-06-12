@@ -155,4 +155,30 @@ describe('collectFiles — git-tracked filter', () => {
     expect(names).toContain('tracked.ts');
     expect(names).toContain('untracked.ts');
   });
+
+  it('.git files bypass the tracked filter when includeGit is true', async () => {
+    const dir = await makeTmp();
+    await fsp.mkdir(path.join(dir, '.git'), { recursive: true });
+    await fsp.writeFile(path.join(dir, '.git', 'config'), '[core]\n');
+    await fsp.writeFile(path.join(dir, '.git', 'HEAD'), 'ref: refs/heads/main\n');
+    await fsp.writeFile(path.join(dir, 'tracked.ts'), '');
+
+    const engine = new IgnoreEngine({
+      root: dir,
+      gitignore: false,
+      defaultIgnore: true,
+      includeEnv: false,
+      includeGit: true,
+      verbose: false,
+    });
+    await engine.loadDirectory(dir);
+
+    const tracked = new Set(['tracked.ts']); // .git files not in this set
+    const files = await collectFiles(dir, engine, false, tracked, true);
+
+    const names = files.map((f) => f.archivePath);
+    expect(names).toContain('tracked.ts');
+    expect(names).toContain('.git/config');
+    expect(names).toContain('.git/HEAD');
+  });
 });
