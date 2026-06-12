@@ -88,7 +88,13 @@ export async function runPack(opts: Partial<PackOptions> & { source: string }): 
   const spinner = options.quiet ? null : ora({ text: 'Collecting files…', spinner: 'dots' });
   spinner?.start();
 
-  const files = await collectFiles(absSource, engine, options.verbose, trackedFiles);
+  const files = await collectFiles(
+    absSource,
+    engine,
+    options.verbose,
+    trackedFiles,
+    options.includeGit,
+  );
 
   spinner?.stop();
 
